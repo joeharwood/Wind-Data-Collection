@@ -36,16 +36,22 @@ root_dir <- "S:/OandT/OptRisk/Energy_Requirements/19 - Wind Energy/WPFS/Wind far
 # check for 32 bit set up
 ifelse(.Machine$sizeof.pointer == 4, "Congrats you are running 32bit", "Caution - Its a trap 64bit")
 
+#set up connection args to DEAF
+connection_args <-  list("DEAFP", "tde", "control1")
+
+query <- "select unique(md.GEN_ID) 
+from vgen_metered_data md
+inner join wind_generator wg on md.gen_id = wg.gen_id
+where (wg.end_date is null or wg.end_date > Sysdate);"
+
 #set up connection to DEAF
-EFS <- odbcConnect("DEAFP", uid = "tde", pwd = "control1")
-
-wind_farm_list <- (sqlQuery(EFS, "select gen_id from wind_generator where (end_date is null or end_date > Sysdate) and category like 'BMU' order by GEN_ID"))$GEN_ID
-
-#wind_farm_list <- setdiff(wind_farm_list, wind_farm_list_old)
+wind_farm_list <- tbl_df(RODBC_query(connection_args, query))
 
 #set up connection to NED
 
 NED <- odbcDriverConnect("Driver={Oracle in OraClient11g_home1};Dbq=NEDP;Uid=caplinj;Pwd=caplinj;")
+
+
 for (i in wind_farm_list) {
   tryCatch(
     {#create sql
@@ -179,4 +185,5 @@ for (i in wind_farm_list) {
 }
 
 
+        
         
